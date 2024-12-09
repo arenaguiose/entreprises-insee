@@ -4,11 +4,13 @@ import math
 from pathlib import Path
 import datetime
 import openpyxl
+import plotly.express as px
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
     page_title='Entreprises créées en 2024 IDF',
     page_icon=':office:', # This is an emoji shortcode. Could be a URL too.
+    layout="wide",
 )
 
 # -----------------------------------------------------------------------------
@@ -279,3 +281,19 @@ num_enterprises = filtered_df["siret"].nunique()
 # Afficher le résultat
 st.metric("Nombre d'entreprises", num_enterprises)
 
+
+# Agrégation : compter le nombre d'entreprises par NIV1 et NIV2
+naf_counts = filtered_df.groupby(["NIV1 - Libellé", "NIV2 - Libellé"]).size().reset_index(name="Count")
+
+# Maintenant, vous devez préparer les données pour l'affichage
+# Créez une colonne avec les codes NAF de niveau 1 pour chaque ligne
+naf_counts["NIV1 - Libellé"] = naf_counts["NIV1 - Libellé"].astype(str)
+
+# Création du graphique en barres horizontal avec la répartition du niveau 2
+# Utilisation de st.bar_chart
+
+# D'abord, on crée un pivot pour avoir une colonne par code NAF de niveau 2
+pivot_df = naf_counts.pivot_table(index="NIV1 - Libellé", columns="NIV2 - Libellé", values="Count", aggfunc="sum", fill_value=0)
+
+# Affichage du graphique
+st.bar_chart(pivot_df, use_container_width=True, horizontal=True)
