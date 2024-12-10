@@ -8,8 +8,8 @@ import plotly.express as px
 
 # Set the title and favicon that appear in the Browser's tab bar.
 st.set_page_config(
-    page_title='Entreprises créées en 2024 IDF',
-    page_icon=':office:', # This is an emoji shortcode. Could be a URL too.
+    page_title="Entreprises créées en 2024 IDF",
+    page_icon=":office:", # This is an emoji shortcode. Could be a URL too.
     layout="wide",
 )
 
@@ -122,6 +122,14 @@ cj_df = get_cj_data()
 def get_work_data():
     raw_df_merged = biz_df.merge(naf_df, left_on=biz_df['activitePrincipaleUniteLegale'], right_on=naf_df['NIV5']).drop(columns=['key_0'])
     raw_df_merged = raw_df_merged.merge(cj_df, left_on=raw_df_merged['categorieJuridiqueUniteLegale'], right_on=cj_df['CJ3']).drop(columns=['key_0'])
+    
+    cols_to_clean = ["NIV1 - Libellé", "NIV2 - Libellé", "NIV3 - Libellé", "NIV4 - Libellé", "NIV5 - Libellé"]
+    for col in cols_to_clean:
+        raw_df_merged[col] = (
+            raw_df_merged[col]
+            .str.replace("'", "", regex=False)  # Supprimer les apostrophes
+            .str.replace('"', '', regex=False)  # Supprimer les guillemets
+        )
     return raw_df_merged
 
 df = get_work_data()
@@ -199,7 +207,7 @@ for i, naf in enumerate(naf_levels):
     with right:
         # Multiselect pour les libellés correspondants
         naf_selections[f"selected_{level}"] = st.multiselect(
-            '',
+            "",
             available_options,
             key=f"multiselect_{level}"
         )
@@ -247,7 +255,7 @@ for i, cj in enumerate(cj_levels):
     with right:
         # Multiselect pour les libellés correspondants
         cj_selections[f"selected_{level}"] = st.multiselect(
-            '',
+            "",
             available_options,
             key=f"multiselect_cj_{level}"
         )
