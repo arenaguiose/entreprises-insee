@@ -127,8 +127,8 @@ def get_work_data():
     for col in cols_to_clean:
         raw_df_merged[col] = (
             raw_df_merged[col]
-            .str.replace("'", "", regex=False)  # Supprimer les apostrophes
-            .str.replace('"', '', regex=False)  # Supprimer les guillemets
+            .str.replace("'", " ", regex=False)  # Supprimer les apostrophes
+            .str.replace('"', ' ', regex=False)  # Supprimer les guillemets
         )
     return raw_df_merged
 
@@ -148,54 +148,58 @@ But it's otherwise a great (and did I mention _free_?) source of data.
 
 # Add some spacing
 ''
+
 ''
 
-# Input dates
-left, right = st.columns(2, vertical_alignment="bottom")
-with left:
-    min_value = df['dateCreationUniteLegale'].min()
-    d1 = st.date_input("Date début", min_value)
-with right:
-    max_value = df['dateCreationUniteLegale'].max()
-    d2 = st.date_input("Date fin", max_value)
+# Organisation de la page avec deux colonnes principales
+left_column, right_column = st.columns([1, 3])  # Ajuster les proportions pour la largeur souhaitée
 
-# Options pour le contrôle segmenté
-options = ["Sélectionner", "Exclure"]
+with left_column:
 
-# Liste des niveaux de NAF
-naf_levels = [
-    {"level": "NIV1", "label": "NIV1 - Libellé"},
-    {"level": "NIV2", "label": "NIV2 - Libellé"},
-    {"level": "NIV3", "label": "NIV3 - Libellé"},
-    {"level": "NIV4", "label": "NIV4 - Libellé"},
-    {"level": "NIV5", "label": "NIV5 - Libellé"},
-]
-
-# Dictionnaire pour stocker les sélections de chaque niveau
-naf_selections = {}
-
-# Créer une copie du DataFrame pour filtrage dynamique
-filtered_df = df.copy()
-
-# Générer dynamiquement les widgets pour chaque niveau NAF
-for i, naf in enumerate(naf_levels):
-    level = naf["level"]
-    label = naf["label"]
-
-    # Obtenir les options disponibles dynamiquement
-    if i == 0:  # Premier niveau : pas de filtre parent
-        available_options = filtered_df[label].drop_duplicates().sort_values()
-    else:  # Filtrer selon les niveaux précédents
-        parent_level = naf_levels[i - 1]["label"]
-        parent_selected = naf_selections[f"selected_{naf_levels[i - 1]['level']}"]
-        if parent_selected:
-            filtered_df = filtered_df[filtered_df[parent_level].isin(parent_selected)]
-        available_options = filtered_df[label].drop_duplicates().sort_values()
-
-    # Layout en deux colonnes
-    left, right = st.columns([3, 6], vertical_alignment="bottom")
-
+    # Input dates
+    left, right = st.columns(2, vertical_alignment="bottom")
     with left:
+        min_value = df['dateCreationUniteLegale'].min()
+        d1 = st.date_input("Date début", min_value)
+    with right:
+        max_value = df['dateCreationUniteLegale'].max()
+        d2 = st.date_input("Date fin", max_value)
+
+    # Options pour le contrôle segmenté
+    options = ["Sélectionner", "Exclure"]
+
+    # Liste des niveaux de NAF
+    naf_levels = [
+        {"level": "NIV1", "label": "NIV1 - Libellé"},
+        {"level": "NIV2", "label": "NIV2 - Libellé"},
+        {"level": "NIV3", "label": "NIV3 - Libellé"},
+        {"level": "NIV4", "label": "NIV4 - Libellé"},
+        {"level": "NIV5", "label": "NIV5 - Libellé"},
+    ]
+
+    # Dictionnaire pour stocker les sélections de chaque niveau
+    naf_selections = {}
+
+    # Créer une copie du DataFrame pour filtrage dynamique
+    filtered_df = df.copy()
+
+    # Générer dynamiquement les widgets pour chaque niveau NAF
+    for i, naf in enumerate(naf_levels):
+        level = naf["level"]
+        label = naf["label"]
+
+        # Obtenir les options disponibles dynamiquement
+        if i == 0:  # Premier niveau : pas de filtre parent
+            available_options = filtered_df[label].drop_duplicates().sort_values()
+        else:  # Filtrer selon les niveaux précédents
+            parent_level = naf_levels[i - 1]["label"]
+            parent_selected = naf_selections[f"selected_{naf_levels[i - 1]['level']}"]
+            if parent_selected:
+                filtered_df = filtered_df[filtered_df[parent_level].isin(parent_selected)]
+            available_options = filtered_df[label].drop_duplicates().sort_values()
+
+        # Layout en deux colonnes
+        
         # Contrôle segmenté pour le niveau
         naf_selections[f"selection_{level}"] = st.segmented_control(
             f"NAF - {level}",
@@ -204,104 +208,105 @@ for i, naf in enumerate(naf_levels):
             selection_mode="single",
             default="Sélectionner"
         )
-    with right:
         # Multiselect pour les libellés correspondants
         naf_selections[f"selected_{level}"] = st.multiselect(
             "",
             available_options,
-            key=f"multiselect_{level}"
+            key=f"multiselect_{level}",
+            label_visibility="collapsed"
         )
 
-# Liste des niveaux de CJ
-cj_levels = [
-    {"level": "CJ1", "label": "CJ1 - Libellé"},
-    {"level": "CJ2", "label": "CJ2 - Libellé"},
-    {"level": "CJ3", "label": "CJ3 - Libellé"},
-]
+    # Liste des niveaux de CJ
+    cj_levels = [
+        {"level": "CJ1", "label": "CJ1 - Libellé"},
+        {"level": "CJ2", "label": "CJ2 - Libellé"},
+        {"level": "CJ3", "label": "CJ3 - Libellé"},
+    ]
 
-# Dictionnaire pour stocker les sélections de chaque niveau
-cj_selections = {}
+    # Dictionnaire pour stocker les sélections de chaque niveau
+    cj_selections = {}
 
-# Créer une copie du DataFrame pour filtrage dynamique CJ
-filtered_df_cj = df.copy()
+    # Créer une copie du DataFrame pour filtrage dynamique CJ
+    filtered_df_cj = df.copy()
 
-# Générer dynamiquement les widgets pour chaque niveau CJ
-for i, cj in enumerate(cj_levels):
-    level = cj["level"]
-    label = cj["label"]
+    # Générer dynamiquement les widgets pour chaque niveau CJ
+    for i, cj in enumerate(cj_levels):
+        level = cj["level"]
+        label = cj["label"]
 
-    # Obtenir les options disponibles dynamiquement
-    if i == 0:  # Premier niveau : pas de filtre parent
-        available_options = filtered_df_cj[label].drop_duplicates().sort_values()
-    else:  # Filtrer selon les niveaux précédents
-        parent_level = cj_levels[i - 1]["label"]
-        parent_selected = cj_selections[f"selected_{cj_levels[i - 1]['level']}"]
-        if parent_selected:
-            filtered_df_cj = filtered_df_cj[filtered_df_cj[parent_level].isin(parent_selected)]
-        available_options = filtered_df_cj[label].drop_duplicates().sort_values()
+        # Obtenir les options disponibles dynamiquement
+        if i == 0:  # Premier niveau : pas de filtre parent
+            available_options = filtered_df_cj[label].drop_duplicates().sort_values()
+        else:  # Filtrer selon les niveaux précédents
+            parent_level = cj_levels[i - 1]["label"]
+            parent_selected = cj_selections[f"selected_{cj_levels[i - 1]['level']}"]
+            if parent_selected:
+                filtered_df_cj = filtered_df_cj[filtered_df_cj[parent_level].isin(parent_selected)]
+            available_options = filtered_df_cj[label].drop_duplicates().sort_values()
 
-    # Layout en deux colonnes
-    left, right = st.columns([3, 6], vertical_alignment="bottom")
+        # Layout en deux colonnes
+        left, right = st.columns([3, 6], vertical_alignment="bottom")
 
-    with left:
-        # Contrôle segmenté pour le niveau
-        cj_selections[f"selection_{level}"] = st.segmented_control(
-            f"CJ - {level}",
-            options,
-            key=f"segmented_control_cj_{level}",
-            selection_mode="single",
-            default="Sélectionner"
-        )
-    with right:
-        # Multiselect pour les libellés correspondants
-        cj_selections[f"selected_{level}"] = st.multiselect(
-            "",
-            available_options,
-            key=f"multiselect_cj_{level}"
-        )
+        with left:
+            # Contrôle segmenté pour le niveau
+            cj_selections[f"selection_{level}"] = st.segmented_control(
+                f"CJ - {level}",
+                options,
+                key=f"segmented_control_cj_{level}",
+                selection_mode="single",
+                default="Sélectionner"
+            )
+        with right:
+            # Multiselect pour les libellés correspondants
+            cj_selections[f"selected_{level}"] = st.multiselect(
+                "",
+                available_options,
+                key=f"multiselect_cj_{level}"
+            )
 
-# Appliquer tous les filtres
-filtered_df = df.copy()
+    # Appliquer tous les filtres
+    filtered_df = df.copy()
 
-# Appliquer les filtres NAF
-for naf in naf_levels:
-    level = naf["level"]
-    label = naf["label"]
-    selected_values = naf_selections[f"selected_{level}"]
-    if naf_selections[f"selection_{level}"] == "Sélectionner" and selected_values:
-        filtered_df = filtered_df[filtered_df[label].isin(selected_values)]
-    elif naf_selections[f"selection_{level}"] == "Exclure" and selected_values:
-        filtered_df = filtered_df[~filtered_df[label].isin(selected_values)]
+    # Appliquer les filtres NAF
+    for naf in naf_levels:
+        level = naf["level"]
+        label = naf["label"]
+        selected_values = naf_selections[f"selected_{level}"]
+        if naf_selections[f"selection_{level}"] == "Sélectionner" and selected_values:
+            filtered_df = filtered_df[filtered_df[label].isin(selected_values)]
+        elif naf_selections[f"selection_{level}"] == "Exclure" and selected_values:
+            filtered_df = filtered_df[~filtered_df[label].isin(selected_values)]
 
-# Appliquer les filtres CJ
-for cj in cj_levels:
-    level = cj["level"]
-    label = cj["label"]
-    selected_values = cj_selections[f"selected_{level}"]
-    if cj_selections[f"selection_{level}"] == "Sélectionner" and selected_values:
-        filtered_df = filtered_df[filtered_df[label].isin(selected_values)]
-    elif cj_selections[f"selection_{level}"] == "Exclure" and selected_values:
-        filtered_df = filtered_df[~filtered_df[label].isin(selected_values)]
+    # Appliquer les filtres CJ
+    for cj in cj_levels:
+        level = cj["level"]
+        label = cj["label"]
+        selected_values = cj_selections[f"selected_{level}"]
+        if cj_selections[f"selection_{level}"] == "Sélectionner" and selected_values:
+            filtered_df = filtered_df[filtered_df[label].isin(selected_values)]
+        elif cj_selections[f"selection_{level}"] == "Exclure" and selected_values:
+            filtered_df = filtered_df[~filtered_df[label].isin(selected_values)]
 
-# Compter le nombre d'entreprises restantes
-num_enterprises = filtered_df["siret"].nunique()
+with right_column:
+    # Compter le nombre d'entreprises restantes
+    num_enterprises = filtered_df["siret"].nunique()
 
-# Afficher le résultat
-st.metric("Nombre d'entreprises", num_enterprises)
+    # Afficher le résultat
+    st.metric("Nombre d'entreprises", num_enterprises)
 
 
-# Agrégation : compter le nombre d'entreprises par NIV1 et NIV2
-naf_counts = filtered_df.groupby(["NIV1 - Libellé", "NIV2 - Libellé"]).size().reset_index(name="Count")
+    # Agrégation : compter le nombre d'entreprises par NIV1 et NIV2
+    naf_counts = filtered_df.groupby(["NIV1 - Libellé", "NIV2 - Libellé"]).size().reset_index(name="Count")
 
-# Maintenant, vous devez préparer les données pour l'affichage
-# Créez une colonne avec les codes NAF de niveau 1 pour chaque ligne
-naf_counts["NIV1 - Libellé"] = naf_counts["NIV1 - Libellé"].astype(str)
+    # Maintenant, vous devez préparer les données pour l'affichage
+    # Créez une colonne avec les codes NAF de niveau 1 pour chaque ligne
+    naf_counts["NIV1 - Libellé"] = naf_counts["NIV1 - Libellé"].astype(str)
 
-# Création du graphique en barres horizontal avec la répartition du niveau 2
-# Utilisation de st.bar_chart
+    # Création du graphique en barres horizontal avec la répartition du niveau 2
+    # Utilisation de st.bar_chart
 
-# D'abord, on crée un pivot pour avoir une colonne par code NAF de niveau 2
-pivot_df = naf_counts.pivot_table(index="NIV1 - Libellé", columns="NIV2 - Libellé", values="Count", aggfunc="sum", fill_value=0)
+    # D'abord, on crée un pivot pour avoir une colonne par code NAF de niveau 2
+    pivot_df = naf_counts.pivot_table(index="NIV1 - Libellé", columns="NIV2 - Libellé", values="Count", aggfunc="sum", fill_value=0)
 
-# Affichage du graphique
-st.bar_chart(pivot_df, use_container_width=True, horizontal=True)
+    # Affichage du graphique
+    st.bar_chart(pivot_df, use_container_width=True, horizontal=True)
