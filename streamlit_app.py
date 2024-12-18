@@ -310,3 +310,38 @@ with right_column:
 
     # Affichage du graphique
     st.bar_chart(pivot_df, use_container_width=True, horizontal=True)
+
+
+    # Préparer les données pour le treemap
+    treemap_df = filtered_df.copy()
+
+    # Ajouter une colonne pour le comptage des entreprises
+    treemap_df["Count"] = 1  # Chaque ligne représente une entreprise, donc chaque ligne compte pour 1.
+
+    # Construire le treemap avec Plotly Express
+    fig = px.treemap(
+        treemap_df,
+        path=[
+            "NIV1 - Libellé",  # Niveau 1
+            "NIV2 - Libellé",  # Niveau 2
+        ],
+        values="Count",  # Utiliser le comptage des entreprises
+        title="Répartition des entreprises par niveaux NAF"    )
+    fig.update_layout(margin = dict(t=50, l=25, r=25, b=25))
+
+    # Afficher le treemap dans Streamlit
+    st.plotly_chart(fig, use_container_width=True)
+
+
+    @st.cache_data
+    def convert_df(df):
+        # IMPORTANT: Cache the conversion to prevent computation on every rerun
+        return df.to_csv().encode("utf-8")  
+
+    # Télécharger la liste filtrée
+    st.download_button(
+        label="Télécharger la liste personnalisée en CSV",
+        data= convert_df(filtered_df),
+        file_name="liste-entreprises.csv",
+        mime="text/csv"
+    )
